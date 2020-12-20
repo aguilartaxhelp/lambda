@@ -1,7 +1,6 @@
 import json
 import sendgrid
 import os
-from sendgrid.helpers.mail import *
 
 
 def sendmail(event, context):
@@ -22,12 +21,40 @@ def sendmail(event, context):
 
     # TODO trigger rate limits on apigw
 
-    sg = sendgrid.SendGridAPIClient(api_key=os.environ.get('SENDGRID_API_KEY'))
-    from_email = Email(os.environ.get('FROM_EMAIL'))
-    to_email = To(os.environ.get('TO_EMAIL'))
-    content = Content("text/plain", msg)
-    mail = Mail(from_email, to_email, subject, content)
-    response = sg.client.mail.send.post(request_body=mail.get())
+
+    sg = sendgrid.SendGridAPIClient(api_key=os.environ.get("SENDGRID_API_KEY"))
+    from_email = os.environ.get("FROM_EMAIL")
+    to_email = os.environ.get("TO_EMAIL")
+    bot_name = os.environ.get("BOT_NAME")
+    to_name = os.environ.get("TO_NAME")
+    data = {
+      "personalizations": [
+        {
+          "to": [
+            {
+              "email": to_email,
+              "name": to_name
+            }
+          ],
+          "subject": bot_name + ": " + subject
+        }
+      ],
+      "from": {
+        "email": from_email,
+        "name": bot_name
+      },
+      "reply_to": {
+        "email": email,
+        "name": name
+      },
+      "content": [
+        {
+          "type": "text/plain",
+          "value": msg
+        }
+      ]
+    }
+    response = sg.client.mail.send.post(request_body=data)
     print(response.status_code)
     print(response.body)
     print(response.headers)
@@ -36,4 +63,3 @@ def sendmail(event, context):
     return {
         'statusCode': 204
     }
-
